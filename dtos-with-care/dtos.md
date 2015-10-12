@@ -80,7 +80,7 @@ public class Student {
 While we're at it. Let's get rid of the get prefix to all of these fields, we aren't a JavaBean, so we don't
 (necessarily) need to follow the JavaBean way.
 
-```
+``` java
 public class Student {
     //...
 
