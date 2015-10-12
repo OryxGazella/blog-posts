@@ -7,11 +7,22 @@ objects. Let's take a sufficiently basic example:
 
 We need to model students for some grading application. Simple enough!
 
+You can follow along with the article by checking out the code from [here](https://github.com/OryxGazella/dtos-with-care).
+There are additional tests in some of the examples that have been omitted from this post for the sake of brevity.
+
+You may have to set your IDEs source roots to pick up the `kotlin`, `groovy` and `scala`
+folders in their relevant sections.
+
 We start off by capturing the students' first names and last names as fields in an object.
+
+``` bash
+git checkout -f 01-plain-old-java-object
+```
 
 ``` java
 public class Student {
     private String firstName;
+    private String lastName;
 
     public String getLastName() {
         return lastName;
@@ -28,8 +39,6 @@ public class Student {
     public void setFirstName(String firstName) {
         this.firstName = firstName;
     }
-
-    private String lastName;
 }
 ```
 
@@ -57,6 +66,10 @@ By default, `Jackson` will use field injection, though this is probably not the 
 
 So here is our first major improvement:
 
+``` bash
+git checkout -f 02-remove-setters
+```
+
 ``` java
 public class Student {
     private final String firstName;
@@ -79,6 +92,10 @@ public class Student {
 
 While we're at it. Let's get rid of the get prefix to all of these fields, we aren't a JavaBean, so we don't
 (necessarily) need to follow the JavaBean way.
+
+``` bash
+git checkout -f 03-un-java-bean
+```
 
 ``` java
 public class Student {
@@ -114,6 +131,10 @@ We also go ahead and create a marker interface to show our intent that the `last
 the constructor as package private. If you're of the lazy persuasion you can use one of the `@Nullable` declarations
 from libraries you use such as `Guava`.
 
+``` bash
+git checkout -f 04-thinking-about-null
+```
+
 ``` java
 ...
 @Nullable
@@ -121,10 +142,12 @@ private String lastName;
 
 public static Student create(String firstName, String lastName) {
        if (firstName == null) throw new IllegalArgumentException("Null firstName");
-       Student student = new Student(firstName, lastName);
+       return new Student(firstName, lastName);
 }
 ...
 ```
+
+And finally we mark the constructor as private.
 
 Okay, great, but how do we ensure that we fail fast when deserializing junk? As we know, libraries such as Jackson will
 use reflection to populate your fields. This one is easy, we just annotate our method with the `@JsonCreator` annotation
@@ -173,6 +196,9 @@ defined upstream. Such that it is possible to have the following returned from t
 ```
 
 We'll simulate how this gets deserialized with the following:
+``` bash
+git checkout -f 05-dealing-with-bad-data
+```
 
 ``` java
 private Collection<Student> simulateBadDataFromApi() {
@@ -217,7 +243,7 @@ public void should_identify_invalid_data() {
 }
 ```
 The filter uses reference equality in its predicate `s != Student.invalidStudent`, which is fine, since all the invalid
-students return the same object.
+students return the same object instance.
 
 After returning an invalid object instance when the validation rules fail, we also notice that there is a duplicate,
 Fabio, that we want to drop.
@@ -546,5 +572,10 @@ A lot of the techniques described here are reactionary measures due to badly def
 the defensive coding to a single place -- the deserialization of data, but the best situation is where you don't
 need to do any form of defensive coding.
 
+### Don't check in generated code
+
+This should go without saying, but I've seen generated code being checked in, and subsequently modified.
+
+Don't do this. Choose life.
 
 
