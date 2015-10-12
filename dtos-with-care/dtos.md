@@ -375,12 +375,12 @@ related to AutoValue.
 
 #### Immutables 2.0
 
-In terms of features `Immutables 2.0` gets my vote for best in class. It's very similar to AutoValue and automatically
+In terms of features [`Immutables 2.0`](http://immutables.org) gets my vote for best in class. It's very similar to AutoValue and automatically
 provides you with a builder!
 
-Just like `AutoValue`, this guy goes and generates code for you at compile time and gets out of your way otherwise.
+Just like `AutoValue`, it goes and generates code for you at compile time and gets out of your way otherwise.
 
-`Jackson` serialization is a breeze with a simple annotation. No need for a @JsonCreator method in this case.
+`Jackson` serialization and deserialization is a breeze with a simple annotation. No need for a @JsonCreator method in this case.
 
 Assuming we want nothing fancy, the above is perfectly satisfied with the following.
 
@@ -393,6 +393,7 @@ public interface Student {
 
     @Nullable
     String lastName();
+}
 ```
 
 And here's the fancy version:
