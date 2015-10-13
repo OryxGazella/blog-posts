@@ -10,9 +10,6 @@ We need to model students for some grading application. Simple enough!
 You can follow along with the article by checking out the code from [here](https://github.com/OryxGazella/dtos-with-care).
 There are additional tests in some of the examples that have been omitted from this post for the sake of brevity.
 
-You may have to set your IDEs source roots to pick up the `kotlin`, `groovy` and `scala`
-folders in their relevant sections.
-
 We start off by capturing the students' first names and last names as fields in an object.
 
 ``` bash
@@ -483,6 +480,9 @@ One of the criticisms leveraged against something such as Lombok is that it is e
 AutoValue's page). So, if you're going to be extralinguistic, why not just use another JVM language.
 
 `Kotlin`, `Scala` and `Groovy` to name a few provide solutions to these problems.
+
+You may have to set your IDE's source roots to pick up the `kotlin`, `groovy` and `scala`
+folders to get these to work from within your IDE.
 
 Here is a bare-bones data class in `Groovy`:
 
