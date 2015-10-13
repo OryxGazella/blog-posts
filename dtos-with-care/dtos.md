@@ -256,6 +256,10 @@ The next biggest mistake I've seen in DTOs is improper handling of `equals()` an
 Only implemented for one or partially implemented. All of these can cause subtle but serious bugs. Modifying the above
 test to use a set instead of a list and expecting two elements results in a failure:
 
+``` bash
+git checkout -f 06-sets-fail
+```
+
 ``` java
 public class StudentTest {
 
@@ -286,6 +290,10 @@ The following test fails because hashCode and equals are not implemented. Easy e
 in our IDE and ask it to roll us an equals and hashCode method, taking care to specify which fields are non-null of
 course. I'm not going to show this code here, but this makes the test pass easily enough.
 
+``` bash
+git checkout -f 07-alt-insert
+```
+
 The code has two main problems:
 
 1.  We have no guarantee that when someone else comes on the project and they add fields to the student object that
@@ -309,13 +317,16 @@ these which is a language...
 
 #### Lombok
 
-TK Pre code step.
-
 I was introduced to `Lombok` when I joined my first Java project. I was racking my brain as to why my IDE would not
 compile the project. I was still wrapping things up on my previous project and was not sitting with the other (30 man!)
-development team.
+development team. After roping in one of the developers I found out that I would need to install the lombok plugin for
+eclipse to realise that getters and setters were being synthesized.
 
 The entirety of what we're trying to achieve can be done as follows using `Lombok`
+
+``` bash
+git checkout -f 08-lombok
+```
 
 ``` java
 @Data
@@ -325,10 +336,6 @@ public class Student {
     private final String firstName;
     @Nullable
     private final String lastName;
-
-    public boolean valid() {
-        return this != invalidStudent;
-    }
 
     @JsonCreator
     public static Student create(@JsonProperty("firstName") String firstName,
@@ -350,18 +357,29 @@ public class Student {
 }
 ```
 
-The problem here is that what's happening behind the scene is an AST transformation, so you don't actually get to see
-the equivalent code. Lombok is modifying the actual class. What you may be after is something that will generate and
+Caveats:
+
+The `Lombok` site's written example has a very old version of `Lombok` in the dependency, I was a bit confused when trying
+to get the application to run for this example.
+
+Since `Lombok` does an AST transform (modifying the bytecode during compile time), you'll need an IDE plugin or else
+your IDE will moan. (Compile still works fine even with the plugin disabled in `IntelliJ`)
+
+`Lombok` does not care about the `@Nullable` interface. Instead, a `@NotNull` annotation should be supplied to the fields
+you don't want to be null, :-(.
+
+What you may be after is something that will generate and
 update your boilerplate code for you.
-
-
-TK Post code step
 
 #### AutoValue
 
-[AutoValue](https://github.com/google/auto/tree/master/value) was the first of these that I worked with.
+[AutoValue](https://github.com/google/auto/tree/master/value) was the first of these code generators that I worked with.
 
 The above example would be done as follows:
+
+``` bash
+git checkout -f 09-auto-value
+```
 
 ``` java
 @AutoValue
@@ -376,11 +394,12 @@ public abstract class Student {
     public static Student create(
             @JsonProperty("firstName") String firstName,
             @JsonProperty("lastName") String lastName) {
-        if(firstName == null) return invalidStudent;
+        if (firstName == null) return invalidStudent;
         return new AutoValue_Student(firstName, lastName);
     }
 
     public abstract String firstName();
+
     @Nullable
     public abstract String lastName();
 }
@@ -397,7 +416,7 @@ There are two caveats worth mentioning.
 1. It's considered best practice to make a package private constructor to discourage subclassing of the abstract class.
 2. If you are serializing the object and you've done away with the getX convention you have a to annotate your accessor
 methods with @JsonProperty as well. This is a Jackson thing more than anything else, so perhaps it does not really
-related to AutoValue.
+relate to AutoValue.
 
 #### Immutables 2.0
 
@@ -422,38 +441,40 @@ public interface Student {
 }
 ```
 
-And here's the fancy version:
+And here's the fancy version (we're still using the @JsonCreator here for the purposes of catching invalid stuff):
+
+``` bash
+git checkout -f 10-immutables
+```
 
 ``` java
 @Value.Immutable
-@JsonSerialize(as = ImmutableStudent.class)
-@JsonDeserialize(as = ImmutableStudent.class)
 public interface Student {
     String firstName();
 
     @Nullable
     String lastName();
 
-    static Student create(String firstName, String lastName) {
-        if(firstName == null) return invalid;
+    @JsonCreator
+    static Student create(
+            @JsonProperty("firstName") String firstName,
+            @JsonProperty("lastName") String lastName) {
+        if (firstName == null) return invalidStudent;
         return ImmutableStudent.builder()
                 .firstName(firstName)
                 .lastName(lastName)
                 .build();
     }
 
-    Student invalid = ImmutableStudent
+    Student invalidStudent = ImmutableStudent
             .builder()
             .firstName("Invalid")
             .build();
-
-    default boolean valid() {
-        return this != invalid;
-    }
 }
 ```
 
-What you want can also be achieved with an abstract class, but an interface saves some keystrokes.
+What you want can also be achieved with an abstract class, but an interface saves some keystrokes. Similar to `AutoValue`,
+any interface called `@Nullable` is honoured by the code generator.
 
 #### Other JVM Languages
 
@@ -492,6 +513,10 @@ That's it! Both of these can fit in a tweet.
 Adding the other fancy stuff for Json deserialization leads to the following full class (import statements omitted) and
 the below test for sanitizing input passes just fine.
 
+``` bash
+git checkout -f 11-groovy
+```
+
 ``` groovy
 @Immutable
 class Student {
@@ -506,27 +531,30 @@ class Student {
     }
 
     static Student invalidStudent = new Student("Invalid", "Invalid")
-    boolean valid() {
-        return !this.is(invalidStudent)
-    }
 }
 ```
 
+References to the static instance will have to change from a field to `getInvalidStudent())`.
+
 And the same thing for Kotlin:
 
-``` kotlin
-package soy.frank.dtos
+``` bash
+git checkout -f 12-kotlin
+```
 
+``` kotlin
 data class Student(val firstName: String, val lastName: String?) {
     companion object {
-        fun create(firstName: String?, lastName: String?): Student {
+        @JsonCreator
+        fun create(
+                @JsonProperty("firstName") firstName: String?,
+                @JsonProperty("lastName") lastName: String?): Student {
             if (firstName == null) return invalidStudent
             return Student(firstName, lastName)
         }
+
         val invalidStudent = Student("Invalid", "Invalid")
     }
-
-    fun valid() : Boolean = this !== invalidStudent
 }
 ```
 
@@ -535,24 +563,23 @@ itself. Instead, classes can have companion objects. As such, to access the crea
 
 `Student.create(x, y)` we have to use `Student.Companion.create(x, y)`
 
+``` bash
+git checkout -f 13-scala
+```
+
 And finally in`Scala`:
 
 ``` scala
-package soy.frank.dtos
-
-case class Student(firstName: String, lastName: String) {
-  def valid = this != Student.invalid
-}
+case class Student(firstName: String, lastName: String)
 
 object Student {
   def create(firstName: String, lastName: String): Student = {
-    if (firstName == null) return invalid
+    if (firstName == null) return invalidStudent
     Student(firstName, lastName)
   }
 
-  def invalid = new Student("Invalid", "Invalid")
+  val invalidStudent = new Student("Invalid", "Invalid")
 }
-
 ```
 
 ## Stray observations
