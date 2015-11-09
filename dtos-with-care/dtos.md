@@ -546,6 +546,7 @@ git checkout -f 12-kotlin
 data class Student(val firstName: String, val lastName: String?) {
     companion object {
         @JsonCreator
+        @JvmStatic
         fun create(
                 @JsonProperty("firstName") firstName: String?,
                 @JsonProperty("lastName") lastName: String?): Student {
@@ -553,21 +554,19 @@ data class Student(val firstName: String, val lastName: String?) {
             return Student(firstName, lastName)
         }
 
-        val invalidStudent = Student("Invalid", "Invalid")
+        @JvmField val invalidStudent = Student("Invalid", "Invalid")
     }
 }
 ```
 
-The following caveats apply. The tests need to be changed slightly. Kotlin does not allow static methods on a class
-itself. Instead, classes can have companion objects. As such, to access the creation method, instead of using
-
-`Student.create(x, y)` we have to use `Student.Companion.create(x, y)`
+The following caveats apply. The `@JvmStatic` and `@JvmField` annotations are for Java interop'
+and allow us to call the method and field as though they are static.
 
 ``` bash
 git checkout -f 13-scala
 ```
 
-And finally in`Scala`:
+And finally in `Scala`:
 
 ``` scala
 case class Student(firstName: String, lastName: String)
